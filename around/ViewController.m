@@ -8,14 +8,18 @@
 
 #import "ViewController.h"
 #import "Profile_Factory.h"
+#import "Profile_DAO.h"
 #import "Game_Board.h"
 #import "User_Session.h"
 #import "Answer_Factory.h"
 #import "Question_Factory.h"
 #import "PointSet_Factory.h"
 #import <QuartzCore/QuartzCore.h>
+#import <AFNetworking/UIKit+AFNetworking.h>
+#import <Nimbus/NIAttributedLabel.h>
+#import <SAMCategories/UIScreen+SAMAdditions.h>
 
-@interface ViewController ()
+@interface ViewController () <UINavigationControllerDelegate, UIImagePickerControllerDelegate, NIAttributedLabelDelegate>
 
     // these are factories and singletons used to persist data from plist files
     @property (strong, nonatomic) Profile_Factory *profileFactoryObject;
@@ -24,6 +28,10 @@
     @property (strong, nonatomic) Answer_Factory *answerFactoryObject;
     @property (strong, nonatomic) Question_Factory *questionFactoryObject;
     @property (strong, nonatomic) PointSet_Factory *pointsetFactoryObject;
+
+    @property (strong, nonatomic) IBOutlet UILabel *nameLabel;
+    @property (strong, nonatomic) IBOutlet FBProfilePictureView *profilePictureView;
+    @property (nonatomic, strong) NSArray *jsonResponse;
 
 @end
 
@@ -44,6 +52,32 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
+    
+//    Profile_DAO *client = [Profile_DAO sharedClient];
+    
+//    [client getShowsForDate:[NSDate date]
+//                   username:@"rwtestuser"
+//               numberOfDays:3
+//                    success:^(NSURLSessionDataTask *task, id responseObject) {
+//                        //                        NSLog(@"Success -- %@", responseObject);
+//                        
+//                        
+//                        // Save response object
+//                        self.jsonResponse = responseObject;
+////                        NSLog(@"AFNET: %@", responseObject);
+//                        
+//                        
+//                    }
+//                    failure:^(NSURLSessionDataTask *task, NSError *error) {
+//                        NSLog(@"Failure -- %@", error);
+//                    }];
+    
+    FBLoginView *loginView = [[FBLoginView alloc] init];
+    [[self.view viewWithTag:888] addSubview:loginView];
+    
+    [loginView setReadPermissions:@[@"public_profile", @"user_likes", @"user_friends"]];
+    [loginView setDelegate:self];
     
     // make sure these objects have the most up to date data
     self.profileFactoryObject  = [Profile_Factory sharedProfileFactory];
@@ -80,6 +114,176 @@
     // set zposition for each of the lanes
     [self shuffleHorizontalonTop];
 }
+
+// This method will be called when the user information has been fetched after login
+- (void)loginViewFetchedUserInfo:(FBLoginView *)loginView
+                            user:(id<FBGraphUser>)user {
+    self.profilePictureView.profileID = user.id;
+    self.nameLabel.text = user.name;
+//    [self makeRequestForUserData];
+}
+
+// Implement the loginViewShowingLoggedOutUser: delegate method to modify your app's UI for a logged-out user experience
+- (void)loginViewShowingLoggedOutUser:(FBLoginView *)loginView {
+    NSLog(@"User logged out");
+    self.profilePictureView.profileID = nil;
+    self.nameLabel.text = @"";
+}
+
+- (void) makeRequestForUserData {
+    [FBRequestConnection startWithGraphPath:@"/me?fields=name,likes.fields(name,picture.width(300).height(300)).limit(500),friends.fields(name,picture.width(300).height(300)).limit(500)"
+                                 parameters:nil
+                                 HTTPMethod:@"GET"
+                          completionHandler:^(
+                                              FBRequestConnection *connection,
+                                              id result,
+                                              NSError *error
+                                              ) {
+                              
+                              
+                              if (!error) {
+                                  // Success! Include your code to handle the results here
+                                  NSMutableArray *zippy = [result objectForKey:@"data"];
+//                                  NSLog(@"user FUNNY info: %@", zippy[@"id"]);
+//                                  NSLog(@"user_id %@", result[@"id"]);
+                                  
+                                  NSError *error;
+                                  NSData *jsonData = [NSJSONSerialization dataWithJSONObject:zippy
+                                                                                     options:NSJSONWritingPrettyPrinted // Pass 0 if you don't care about the readability of the generated string
+                                                                                       error:&error];
+                                  NSString * myString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+                                  
+                                  // prepare for post
+                                  NSObject * payload = @{ @"userid" : result[@"id"] };
+//                                  NSLog(@"user_id %@", result[@"id"]);
+                                  
+                                  AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                                  manager.requestSerializer = [AFJSONRequestSerializer serializer];
+//                                  manager.responseSerializer = [AFJSONResponseSerializer serializer];
+                                  
+                                  
+                                  [manager POST:@"https://thawing-mountain-1681.herokuapp.com/funky"
+                                     parameters:payload
+                                        success:^(AFHTTPRequestOperation *operation, id responseObject)
+                                  {
+                                      NSLog(@"JSON: %@", responseObject);
+                                  }
+                                        failure:
+                                   ^(AFHTTPRequestOperation *operation, NSError *error) {
+                                       NSLog(@"Error: %@", error);
+                                   }];
+                              } else {
+                                  // An error occurred, we need to handle the error
+                                  // Check out our error handling guide: https://developers.facebook.com/docs/ios/errors/
+                                  NSLog(@"error %@", error.description);
+                              }
+                              
+                          }];
+}
+
+// You need to override loginView:handleError in order to handle possible errors that can occur during login
+- (void)loginView:(FBLoginView *)loginView handleError:(NSError *)error {
+    NSString *alertMessage, *alertTitle;
+    
+    // If the user should perform an action outside of you app to recover,
+    // the SDK will provide a message for the user, you just need to surface it.
+    // This conveniently handles cases like Facebook password change or unverified Facebook accounts.
+    if ([FBErrorUtility shouldNotifyUserForError:error]) {
+        alertTitle = @"Facebook error";
+        alertMessage = [FBErrorUtility userMessageForError:error];
+        
+        // This code will handle session closures since that happen outside of the app.
+        // You can take a look at our error handling guide to know more about it
+        // https://developers.facebook.com/docs/ios/errors
+    } else if ([FBErrorUtility errorCategoryForError:error] == FBErrorCategoryAuthenticationReopenSession) {
+        alertTitle = @"Session Error";
+        alertMessage = @"Your current session is no longer valid. Please log in again.";
+        
+        // If the user has cancelled a login, we will do nothing.
+        // You can also choose to show the user a message if cancelling login will result in
+        // the user not being able to complete a task they had initiated in your app
+        // (like accessing FB-stored information or posting to Facebook)
+    } else if ([FBErrorUtility errorCategoryForError:error] == FBErrorCategoryUserCancelled) {
+        NSLog(@"user cancelled login");
+        
+        // For simplicity, this sample handles other errors with a generic message
+        // You can checkout our error handling guide for more detailed information
+        // https://developers.facebook.com/docs/ios/errors
+    } else {
+        alertTitle  = @"Something went wrong";
+        alertMessage = @"Please try again later.";
+        NSLog(@"Unexpected error:%@", error);
+    }
+    
+    if (alertMessage) {
+        [[[UIAlertView alloc] initWithTitle:alertTitle
+                                    message:alertMessage
+                                   delegate:nil
+                          cancelButtonTitle:@"OK"
+                          otherButtonTitles:nil] show];
+    }
+}
+
+
+// Implement the loginViewShowingLoggedInUser: delegate method to modify your app's UI for a logged-in user experience
+//- (void)loginViewShowingLoggedInUser:(FBLoginView *)loginView {
+//    NSLog(@"User logged in");
+//
+//
+//    // We will request the user's public picture and the user's birthday
+//    // These are the permissions we need:
+//    NSArray *permissionsNeeded = @[@"public_profile", @"user_likes", @"user_friends"];
+//
+//    // Request the permissions the user currently has
+//    [FBRequestConnection startWithGraphPath:@"/me/permissions"
+//                          completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
+//                              if (!error){
+//                                  // These are the current permissions the user has
+//                                  NSDictionary *currentPermissions= [(NSArray *)[result data] objectAtIndex:0];
+//
+//                                  // We will store here the missing permissions that we will have to request
+//                                  NSMutableArray *requestPermissions = [[NSMutableArray alloc] initWithArray:@[]];
+//
+//                                  // Check if all the permissions we need are present in the user's current permissions
+//                                  // If they are not present add them to the permissions to be requested
+//                                  for (NSString *permission in permissionsNeeded){
+//                                      if (![currentPermissions objectForKey:permission]){
+//                                          [requestPermissions addObject:permission];
+//                                      }
+//                                  }
+//
+//                                  // If we have permissions to request
+//                                  if ([requestPermissions count] > 0){
+//                                      // Ask for the missing permissions
+//                                      [FBSession.activeSession
+//                                       requestNewReadPermissions:requestPermissions
+//                                       completionHandler:^(FBSession *session, NSError *error) {
+//                                           if (!error) {
+//                                               // Permission granted, we can request the user information
+//                                               [self makeRequestForUserData];
+//                                           } else {
+//                                               // An error occurred, we need to handle the error
+//                                               // Check out our error handling guide: https://developers.facebook.com/docs/ios/errors/
+//                                               NSLog(@"error %@", error.description);
+//                                           }
+//                                       }];
+//                                  } else {
+//                                      // Permissions are present
+//                                      // We can request the user information
+//                                      [self makeRequestForUserData];
+//                                  }
+//
+//                              } else {
+//                                  // An error occurred, we need to handle the error
+//                                  // Check out our error handling guide: https://developers.facebook.com/docs/ios/errors/
+//                                  NSLog(@"error %@", error.description);
+//                              }
+//                          }];
+//
+//
+//
+//
+//}
 
 - (void) gesturizer:(UICollectionView*)lane {
     
@@ -155,9 +359,9 @@
     }
 }
 
-//- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
-//    NSLog(@"Touches Began %@", touches);
-//}
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+    NSLog(@"Touches Began %@", touches);
+}
 
 
 - (void)reportUpSwipe:(UIGestureRecognizer *)recognizer {

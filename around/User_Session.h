@@ -18,7 +18,8 @@
 - (NSArray *)questions;
 
 // these are public methods accessible from the static object
--(int)findQuestion_ID:(NSDictionary *)matchAnswers;
+- (int)findQuestion_ID:(NSDictionary *)matchAnswers;
 - (void)addAnswer:(int)questionID :(int)useranswer;
+- (NSDictionary *)getUserID;
 
 @end

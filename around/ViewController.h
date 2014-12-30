@@ -8,7 +8,9 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ViewController : UIViewController <UICollectionViewDelegate, UICollectionViewDataSource>
+#import <FacebookSDK/FacebookSDK.h>
+
+@interface ViewController : UIViewController <UICollectionViewDelegate, UICollectionViewDataSource, FBLoginViewDelegate>
 
 // these are outlets presented in the view
 @property (strong, nonatomic) IBOutlet UIView *viewWrapper;

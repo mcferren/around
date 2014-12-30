@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>6565D372-4F80-40AA-9165-A99AD306FC01</string>
+	<key>IDESourceControlProjectName</key>
+	<string>around</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>38EDB375-D651-4AB6-8F6D-3B8BB4E3686B</key>
+		<string>ssh://github.com/mcferren/around.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>around.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>38EDB375-D651-4AB6-8F6D-3B8BB4E3686B</key>
+		<string>..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>ssh://github.com/mcferren/around.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>38EDB375-D651-4AB6-8F6D-3B8BB4E3686B</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>38EDB375-D651-4AB6-8F6D-3B8BB4E3686B</string>
+			<key>IDESourceControlWCCName</key>
+			<string>around</string>
+		</dict>
+	</array>
+</dict>
+</plist>

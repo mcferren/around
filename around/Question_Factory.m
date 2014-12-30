@@ -60,7 +60,7 @@
         [self addQuestion:[self.names objectForKey:key]];
     }
     
-    NSLog(@"_question %@", _questions);
+//    NSLog(@"_question %@", _questions);
 }
 
 
@@ -75,10 +75,10 @@
 
 // this is a general go to purpose method used to insert the object it recevies into the class property array. It forces intent by invokeng the save method
 - (void)addQuestion:(id)item {
-    NSLog(@"BEFORE _questions %@", _questions);
+//    NSLog(@"BEFORE _questions %@", _questions);
     [_questions insertObject:item atIndex:0];
     [self saveQuestions];
-    NSLog(@"AFTER _questions %@", _questions);
+//    NSLog(@"AFTER _questions %@", _questions);
 }
 
 

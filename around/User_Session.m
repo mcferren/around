@@ -6,9 +6,10 @@
 //  Copyright (c) 2014 DePaul University. All rights reserved.
 //
 
+#include <stdlib.h>
 #import "User_Session.h"
 #import "Answer_Factory.h"
-#include <stdlib.h>
+#import "DAO.h"
 
 @interface User_Session ()
 
@@ -17,6 +18,8 @@
 @property (copy, nonatomic) NSDictionary *questionNames;
 
 @property (strong, nonatomic) Answer_Factory *answerFactoryObject;
+@property (strong, nonatomic) DAO *dataAccessObject;
+@property (strong, nonatomic) NSDictionary *userObject;
 
 @end
 
@@ -27,12 +30,20 @@
     self = [super init];
     if (self) {
         
+        _dataAccessObject = [DAO sharedClient];
+        [_dataAccessObject getUserData:^(id responseObject, NSError *error) {
+            
+//            NSLog(@"Success -- %@", [responseObject objectForKey:@"_id"]);
+            NSLog(@"Success -- %@", responseObject);
+            _userObject = responseObject;
+        }];
+        
         self.answerFactoryObject = [Answer_Factory sharedAnswerFactory];
         
         NSUserDefaults *defaults =
         [NSUserDefaults standardUserDefaults];
         NSArray *storedAnswers = [defaults objectForKey:@"answerobjects"];
-        if (storedAnswers) { // mutable means can change
+        if (storedAnswers) { 
             self.answers = [storedAnswers mutableCopy];
         } else {
             self.answers = [NSMutableArray array];
@@ -65,6 +76,10 @@
         shared = [[self alloc] init];
     });
     return shared;
+}
+
+- (NSDictionary *)getUserID {
+    return _userObject[@"_id"];
 }
 
 
